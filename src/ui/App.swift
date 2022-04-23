@@ -18,6 +18,7 @@ class App: AppCenterApplication, NSApplicationDelegate {
     static let repository = "https://github.com/lwouis/alt-tab-macos"
     static var app: App!
     var thumbnailsPanel: ThumbnailsPanel!
+    var miniPanel: MiniPanel!
     var preferencesWindow: PreferencesWindow!
     var feedbackWindow: FeedbackWindow!
     var isFirstSummon = true
@@ -26,7 +27,7 @@ class App: AppCenterApplication, NSApplicationDelegate {
     var shortcutIndex = 0
     var appCenterDelegate: AppCenterCrash?
     // multiple delayed display triggers should only show the ui when the last one triggers
-    var delayedDisplayScheduled = 0
+//    var delayedDisplayScheduled = 0
 
     override init() {
         super.init()
@@ -56,6 +57,7 @@ class App: AppCenterApplication, NSApplicationDelegate {
             Menubar.initialize()
             self.loadMainMenuXib()
             self.thumbnailsPanel = ThumbnailsPanel()
+            self.miniPanel = MiniPanel()
             Spaces.initialDiscovery()
             Applications.initialDiscovery()
             self.preferencesWindow = PreferencesWindow()
@@ -85,6 +87,7 @@ class App: AppCenterApplication, NSApplicationDelegate {
     private func preloadWindows() {
         thumbnailsPanel.orderFront(nil)
         thumbnailsPanel.orderOut(nil)
+        miniPanel.show()
     }
 
     // keyboard shortcuts are broken without a menu. We generated the default menu from XCode and load it
@@ -215,8 +218,10 @@ class App: AppCenterApplication, NSApplicationDelegate {
     }
 
     func refreshOpenUi(_ windowsToUpdate: [Window]? = nil) {
-        guard appIsBeingUsed else { return }
         let currentScreen = NSScreen.preferred() // fix screen between steps since it could change (e.g. mouse moved to another screen)
+        Windows.refreshWhichWindowsToShowTheUser(currentScreen)
+        refreshTooltip(screen: currentScreen)
+        guard appIsBeingUsed else { return }
         // workaround: when Preferences > Mission Control > "Displays have separate Spaces" is unchecked,
         // switching between displays doesn't trigger .activeSpaceDidChangeNotification; we get the latest manually
         Spaces.refreshCurrentSpaceId()
@@ -235,6 +240,12 @@ class App: AppCenterApplication, NSApplicationDelegate {
         guard appIsBeingUsed else { return }
         currentScreen.repositionPanel(thumbnailsPanel, .appleCentered)
         Windows.voiceOverFocusedWindow() // at this point ThumbnailViews are assigned to the window, and ready
+    }
+    
+    private func refreshTooltip(screen: NSScreen) {
+        let list = Windows.list.filter { $0.shouldShowTheUser }
+        print("refreshTooltip count=\(list.count)")
+        miniPanel.updateViews(list, in: screen)
     }
 
     private func refreshSpecificWindows(_ windowsToUpdate: [Window]?, _ currentScreen: NSScreen) -> ()? {
@@ -267,13 +278,14 @@ class App: AppCenterApplication, NSApplicationDelegate {
             Windows.reorderList()
             if (!Windows.list.contains { $0.shouldShowTheUser }) { hideUi(); return }
             Windows.setInitialFocusedWindowIndex()
-            delayedDisplayScheduled += 1
-            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + Preferences.windowDisplayDelay) { () -> () in
-                if self.delayedDisplayScheduled == 1 {
-                    self.rebuildUi(screen)
-                }
-                self.delayedDisplayScheduled -= 1
-            }
+//            delayedDisplayScheduled += 1
+            self.rebuildUi(screen)
+//            DispatchQueue.main.asyncAfter(deadline: DispatchTime.now() + Preferences.windowDisplayDelay) { () -> () in
+//                if self.delayedDisplayScheduled == 1 {
+//                    self.rebuildUi(screen)
+//                }
+//                self.delayedDisplayScheduled -= 1
+//            }
         } else {
             cycleSelection(.leading)
             KeyRepeatTimer.toggleRepeatingKeyNextWindow()

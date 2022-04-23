@@ -23,8 +23,8 @@ fileprivate func handleEvent(_ type: String, _ element: AXUIElement) throws {
             case kAXWindowMiniaturizedNotification,
                  kAXWindowDeminiaturizedNotification: try windowMiniaturizedOrDeminiaturized(element, type)
             case kAXTitleChangedNotification: try windowTitleChanged(element, pid)
-            case kAXWindowResizedNotification: try windowResized(element)
-            case kAXWindowMovedNotification: try windowMoved(element)
+//            case kAXWindowResizedNotification: try windowResized(element)
+//            case kAXWindowMovedNotification: try windowMoved(element)
             case kAXFocusedUIElementChangedNotification: try focusedUiElementChanged(pid)
             default: return
         }
@@ -36,6 +36,7 @@ fileprivate func focusedUiElementChanged(_ pid: pid_t) throws {
 }
 
 fileprivate func applicationActivated(_ element: AXUIElement, _ pid: pid_t) throws {
+    debugPrint("applicationActivated")
     let appFocusedWindow = try element.focusedWindow()
     let wid = try appFocusedWindow?.cgWindowId()
     DispatchQueue.main.async {
@@ -52,6 +53,7 @@ fileprivate func applicationActivated(_ element: AXUIElement, _ pid: pid_t) thro
 }
 
 fileprivate func applicationHiddenOrShown(_ pid: pid_t, _ type: String) throws {
+    debugPrint("applicationHiddenOrShown")
     DispatchQueue.main.async {
         if let app = (Applications.list.first { $0.pid == pid }) {
             app.isHidden = type == kAXApplicationHiddenNotification
@@ -65,6 +67,7 @@ fileprivate func applicationHiddenOrShown(_ pid: pid_t, _ type: String) throws {
 }
 
 fileprivate func windowCreated(_ element: AXUIElement, _ pid: pid_t) throws {
+    debugPrint("windowCreated")
     if let wid = try element.cgWindowId() {
         let axTitle = try element.title()
         let subrole = try element.subrole()
@@ -89,6 +92,7 @@ fileprivate func windowCreated(_ element: AXUIElement, _ pid: pid_t) throws {
 }
 
 fileprivate func focusedWindowChanged(_ element: AXUIElement, _ pid: pid_t) throws {
+    debugPrint("focusedWindowChanged")
     if let wid = try element.cgWindowId(),
        let runningApp = NSRunningApplication(processIdentifier: pid) {
         // photoshop will focus a window *after* you focus another app
@@ -135,6 +139,7 @@ fileprivate func focusedWindowChanged(_ element: AXUIElement, _ pid: pid_t) thro
 }
 
 fileprivate func windowDestroyed(_ element: AXUIElement, _ pid: pid_t) throws {
+    debugPrint("windowDestroyed")
     let wid = try element.cgWindowId()
     DispatchQueue.main.async {
         if let index = (Windows.list.firstIndex { $0.isEqualRobust(element, wid) }) {
@@ -159,6 +164,7 @@ fileprivate func windowDestroyed(_ element: AXUIElement, _ pid: pid_t) throws {
 }
 
 fileprivate func windowMiniaturizedOrDeminiaturized(_ element: AXUIElement, _ type: String) throws {
+    debugPrint("windowMiniaturizedOrDeminiaturized")
     if let wid = try element.cgWindowId() {
         DispatchQueue.main.async {
             if let window = (Windows.list.first { $0.isEqualRobust(element, wid) }) {
@@ -170,6 +176,7 @@ fileprivate func windowMiniaturizedOrDeminiaturized(_ element: AXUIElement, _ ty
 }
 
 fileprivate func windowTitleChanged(_ element: AXUIElement, _ pid: pid_t) throws {
+    debugPrint("windowTitleChanged")
     if let wid = try element.cgWindowId() {
         let newTitle = try element.title()
         DispatchQueue.main.async {
@@ -188,6 +195,7 @@ fileprivate func windowTitleChanged(_ element: AXUIElement, _ pid: pid_t) throws
 fileprivate func windowResized(_ element: AXUIElement) throws {
     // TODO: only trigger this at the end of the resize, not on every tick
     // currenly resizing a window will lag AltTab as it triggers too much UI work
+    debugPrint("windowResized")
     if let wid = try element.cgWindowId() {
         let isFullscreen = try element.isFullscreen()
         DispatchQueue.main.async {
@@ -203,6 +211,7 @@ fileprivate func windowResized(_ element: AXUIElement) throws {
 }
 
 fileprivate func windowMoved(_ element: AXUIElement) throws {
+    debugPrint("windowMoved")
     if let wid = try element.cgWindowId() {
         let position = try element.position()
         DispatchQueue.main.async {

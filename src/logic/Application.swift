@@ -66,6 +66,7 @@ class Application: NSObject {
     }
 
     func removeWindowslessAppWindow() {
+        debugPrint("removeWindowslessAppWindow")
         if let windowlessAppWindow = (Windows.list.firstIndex { $0.isWindowlessApp == true && $0.application.pid == pid }) {
             Windows.list.remove(at: windowlessAppWindow)
             App.app.refreshOpenUi()

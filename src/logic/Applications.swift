@@ -48,6 +48,7 @@ class Applications {
     }
 
     static func removeRunningApplications(_ runningApps: [NSRunningApplication]) {
+        debugPrint("removeRunningApplications")
         var windowsOnTheLeftOfFocusedWindow = 0
         for runningApp in runningApps {
             // comparing pid here can fail here, as it can be already nil; we use isEqual here to avoid the issue
